@@ -1,79 +1,162 @@
-# gerenciamento-restaurantes
-📝 Sistema de Gestão de Restaurantees
-Este é um sistema de gerenciamento de restaurantes focado em eficiência e organização de pedidos (Mesa e Delivery), cadastro de produtos e controle de clientes.
+# 🍽️ Sistema de Gestão de Restaurantes
 
-O projeto foi desenvolvido aplicando Design Patterns modernos para garantir que o código seja limpo, testável e fácil de manter.
+Sistema completo para gerenciamento de restaurantes, focado em eficiência, organização de pedidos e controle operacional.
 
-🚀 Funcionalidades
-📦 Gestão de Pedidos: Registro de vendas para consumo local ou entrega.
+Desenvolvido com boas práticas de arquitetura e Design Patterns modernos, garantindo um código limpo, escalável e de fácil manutenção.
 
-🍕 Catálogo de Produtos: Cadastro, edição e exclusão de itens com categorias e preços.
+---
 
-👥 Controle de Clientes: Cadastro rápido e histórico de clientes para delivery.
+## 🚀 Funcionalidades
 
-📊 Resumo de Vendas: Cálculo automático de totais e histórico de pedidos.
+### 📦 Gestão de Pedidos
 
-🏗️ Arquitetura do Projeto (Design Patterns)
-O sistema utiliza a arquitetura em camadas para separar as responsabilidades:
+* Registro de pedidos para consumo local (mesa)
+* Registro de pedidos para delivery
+* Cálculo automático de totais
 
-View (Main): Interface gráfica construída com CustomTkinter.
+### 🍕 Catálogo de Produtos
 
-Service Layer: Onde residem as regras de negócio. Responsável por validar dados, calcular totais e formatar informações antes de chegarem à tela.
+* Cadastro de produtos
+* Edição e exclusão de itens
+* Organização por categorias
+* Controle de preços
 
-Repository Layer: Responsável exclusiva pela comunicação com o banco de dados SQL. Abstrai as queries complexas.
+### 👥 Controle de Clientes
 
-Database: Camada de infraestrutura que gerencia a conexão com o SQLite.
+* Cadastro rápido de clientes
+* Histórico de pedidos (delivery)
+* Organização de dados para atendimento ágil
 
-Estrutura de Pastas:
-Plaintext
+### 📊 Resumo de Vendas
+
+* Visualização de pedidos realizados
+* Totais calculados automaticamente
+* Histórico de vendas
+
+---
+
+## 🏗️ Arquitetura do Projeto
+
+O sistema segue uma **arquitetura em camadas**, separando responsabilidades e facilitando manutenção e testes:
+
+### 🔹 View (Interface)
+
+* Construída com **CustomTkinter**
+* Responsável pela interação com o usuário
+
+### 🔹 Service Layer
+
+* Contém as regras de negócio
+* Validação de dados
+* Cálculo de totais
+* Formatação das informações
+
+### 🔹 Repository Layer
+
+* Responsável pelo acesso ao banco de dados
+* Execução de operações CRUD
+* Abstração das queries SQL
+
+### 🔹 Database
+
+* Gerenciamento da conexão com **SQLite**
+* Inicialização do banco
+
+---
+
+## 📁 Estrutura de Pastas
+
+```plaintext
 src/
-├── database/      # Conexão e inicialização do SQLite
-├── repositories/  # Queries SQL (CRUD)
-├── services/      # Regras de negócio e validações
-├── assets/        # Imagens e ícones (futuro)
-└── main.py        # Ponto de entrada do sistema
-🛠️ Tecnologias Utilizadas
-Linguagem: Python 3.x
+├── database/        # Conexão e inicialização do SQLite
+├── repositories/    # Queries SQL (CRUD)
+├── services/        # Regras de negócio e validações
+├── assets/          # Imagens e ícones (futuro)
+└── main.py          # Ponto de entrada do sistema
+```
 
-Interface Gráfica: CustomTkinter
+---
 
-Banco de Dados: SQLite (nativo Python)
+## 🛠️ Tecnologias Utilizadas
 
-⚙️ Como Executar
-Clone o repositório:
+* **Linguagem:** Python 3.x
+* **Interface Gráfica:** CustomTkinter
+* **Banco de Dados:** SQLite
 
-Bash
+---
+
+## ⚙️ Como Executar
+
+### 1. Clone o repositório
+
+```bash
 git clone https://github.com/seu-usuario/gerenciamento-restaurantes.git
-Instale as dependências:
+```
 
-Bash
+### 2. Acesse o diretório do projeto
+
+```bash
+cd gerenciamento-restaurantes
+```
+
+### 3. Instale as dependências
+
+```bash
 pip install customtkinter
-Inicie o sistema:
+```
 
-Bash
+### 4. Execute o sistema
+
+```bash
 python src/main.py
-📈 Roadmap de Evolução
-Este projeto está em constante evolução. Próximas melhorias planejadas:
+```
 
-[ ] Relatórios Financeiros: Geração de gráficos de faturamento mensal.
+---
 
-[ ] Impressão de Cupom: Integração com impressoras térmicas 80mm.
+## 📈 Roadmap
 
-[ ] Sistema de Login: Diferenciação entre Garçom e Administrador.
+O projeto está em evolução contínua. Próximas funcionalidades:
 
-[ ] Notificação WhatsApp: Envio automático de confirmação de pedido.
+* [ ] 📊 Relatórios financeiros com gráficos
+* [ ] 🧾 Impressão de cupons (impressora térmica 80mm)
+* [ ] 🔐 Sistema de login (Garçom / Administrador)
+* [ ] 📲 Integração com WhatsApp (confirmação de pedidos)
 
-🤝 Contribuição
-Contribuições são sempre bem-vindas!
+---
 
-Faça um Fork do projeto.
+## 🤝 Contribuição
 
-Crie uma Branch para sua Feature (git checkout -b feature/NovaFeature).
+Contribuições são muito bem-vindas!
 
-Dê um Commit nas suas alterações (git commit -m 'Adicionando nova funcionalidade X').
+1. Faça um **Fork** do projeto
+2. Crie uma branch:
 
-Dê um Push na Branch (git push origin feature/NovaFeature).
+   ```bash
+   git checkout -b feature/NovaFeature
+   ```
+3. Commit suas alterações:
 
-Abra um Pull Request.
+   ```bash
+   git commit -m "Adicionando nova funcionalidade"
+   ```
+4. Envie para o repositório:
 
-Desenvolvido por [Lucas]
+   ```bash
+   git push origin feature/NovaFeature
+   ```
+5. Abra um **Pull Request**
+
+---
+
+## 👨‍💻 Autor
+
+Desenvolvido por **Lucas**
+
+---
+
+## 📄 Licença
+
+Este projeto está sob a licença MIT.
+Sinta-se livre para usar, modificar e contribuir.
+
+---
