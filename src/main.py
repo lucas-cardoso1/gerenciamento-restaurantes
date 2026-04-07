@@ -1,6 +1,10 @@
 import customtkinter as ctk
 from tkinter import messagebox
-import database as db
+
+from database.connection import inicializar_banco
+from services.cliente_service import ClienteService
+from services.produto_service import ProdutoService
+from services.pedido_service import PedidoService
 
 ctk.set_appearance_mode("System")
 ctk.set_default_color_theme("blue")
@@ -9,19 +13,22 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
 
-        self.title("Sistema de Gestão - Chedid v1.0")
+        self.title("Sistema de Gestão - v1.0")
         self.geometry("1000x700")
 
-        db.inicializar_banco()
+        inicializar_banco()
+
+        self.service_cliente = ClienteService()
+        self.service_produto = ProdutoService()
+        self.service_pedido = PedidoService()
 
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
-        # --- Sidebar ---
         self.sidebar = ctk.CTkFrame(self, width=200, corner_radius=0)
         self.sidebar.grid(row=0, column=0, sticky="nsew")
         
-        self.label_menu = ctk.CTkLabel(self.sidebar, text="CHEDID ESFIHARIA", font=ctk.CTkFont(size=18, weight="bold"))
+        self.label_menu = ctk.CTkLabel(self.sidebar, text="ESFIHARIA", font=ctk.CTkFont(size=18, weight="bold"))
         self.label_menu.pack(padx=20, pady=30)
 
         self.btn_pedidos = ctk.CTkButton(self.sidebar, text="Novo Pedido", command=self.aba_pedidos)
@@ -59,8 +66,10 @@ class App(ctk.CTk):
         self.tipo_pedido.set("Local")
         self.tipo_pedido.pack(pady=5)
 
-        clientes = [f"{c[0]} | {c[1]}" for c in db.listar_clientes()]
-        self.combo_cli = ctk.CTkComboBox(frame_esq, values=["Avulso"] + clientes, width=250)
+        clientes_formatados = self.service_cliente.listar_para_exibicao()
+        clientes_lista = [f"{c[0]} | {c[1]}" for c in clientes_formatados]
+        
+        self.combo_cli = ctk.CTkComboBox(frame_esq, values=["Avulso"] + clientes_lista, width=250)
         self.combo_cli.pack(pady=5)
 
         ctk.CTkButton(frame_esq, text="+ Cadastro Rápido", width=150, height=20, fg_color="transparent", border_width=1, command=self.popup_novo_cliente).pack()
@@ -70,7 +79,7 @@ class App(ctk.CTk):
 
         ctk.CTkLabel(frame_esq, text="2. Adicionar Itens", font=("Arial", 16, "bold")).pack(pady=5)
         
-        produtos = [f"{p[1]} | R$ {p[2]:.2f}" for p in db.listar_produtos()]
+        produtos = self.service_produto.listar_para_combo()
         self.select_prod = ctk.CTkComboBox(frame_esq, values=produtos, width=250)
         self.select_prod.pack(pady=5)
         
@@ -107,15 +116,17 @@ class App(ctk.CTk):
         self.lbl_total.configure(text=f"TOTAL: R$ {total:.2f}")
 
     def finalizar_pedido(self):
-        ident = self.ent_identificacao.get()
-        if not self.carrinho or not ident:
-            messagebox.showwarning("Erro", "Preencha os itens e a identificação!")
-            return
-        itens_str = ", ".join([i[0] for i in self.carrinho])
-        total = sum([i[1] for i in self.carrinho])
-        db.salvar_pedido(ident, itens_str, total, self.tipo_pedido.get(), self.combo_cli.get())
-        messagebox.showinfo("Sucesso", "Pedido Finalizado!")
-        self.aba_pedidos()
+        try:
+            total = self.service_pedido.processar_e_salvar(
+                ident=self.ent_identificacao.get(),
+                carrinho=self.carrinho,
+                tipo=self.tipo_pedido.get(),
+                cliente=self.combo_cli.get()
+            )
+            messagebox.showinfo("Sucesso", f"Pedido de R$ {total:.2f} Finalizado!")
+            self.aba_pedidos()
+        except ValueError as e:
+            messagebox.showwarning("Erro", str(e))
 
     def popup_novo_cliente(self):
         popup = ctk.CTkToplevel(self)
@@ -128,10 +139,13 @@ class App(ctk.CTk):
         e = ctk.CTkEntry(popup, placeholder_text="Endereço", width=250); e.pack(pady=5)
 
         def salvar():
-            if n.get():
-                db.adicionar_cliente(n.get(), t.get(), e.get())
+            try:
+                self.service_cliente.cadastrar(n.get(), t.get(), e.get())
                 popup.destroy()
                 self.aba_pedidos() 
+            except ValueError as err:
+                messagebox.showwarning("Atenção", str(err))
+
         ctk.CTkButton(popup, text="Salvar", command=salvar).pack(pady=10)
 
     # ================= TELA DE PRODUTOS =================
@@ -139,14 +153,13 @@ class App(ctk.CTk):
         self.limpar_tela()
         ctk.CTkLabel(self.conteudo, text="Gestão de Produtos", font=("Arial", 20, "bold")).pack(pady=10)
 
-        # Cadastro
         f_cad = ctk.CTkFrame(self.conteudo)
         f_cad.pack(pady=10, padx=20, fill="x")
         
         self.ent_nome_p = ctk.CTkEntry(f_cad, placeholder_text="Nome do Produto", width=200)
         self.ent_nome_p.pack(side="left", padx=5, pady=10)
         
-        self.ent_preco_p = ctk.CTkEntry(f_cad, placeholder_text="Preço (Ex: 15.00)", width=100)
+        self.ent_preco_p = ctk.CTkEntry(f_cad, placeholder_text="Preço", width=100)
         self.ent_preco_p.pack(side="left", padx=5)
 
         self.ent_cat_p = ctk.CTkOptionMenu(f_cad, values=["Comidas", "Bebidas", "Sobremesas"], width=120)
@@ -154,24 +167,26 @@ class App(ctk.CTk):
 
         ctk.CTkButton(f_cad, text="Salvar", width=100, fg_color="green", command=self.salvar_produto).pack(side="left", padx=10)
 
-        # Listagem
         self.scroll_prod = ctk.CTkScrollableFrame(self.conteudo, width=700, height=350)
         self.scroll_prod.pack(pady=10, padx=20, fill="both", expand=True)
         self.listar_produtos_ui()
 
     def salvar_produto(self):
-        nome = self.ent_nome_p.get()
-        preco = self.ent_preco_p.get().replace(",", ".")
-        if nome and preco:
-            try:
-                db.adicionar_produto(nome, float(preco), self.ent_cat_p.get())
-                self.listar_produtos_ui()
-                self.ent_nome_p.delete(0, 'end'); self.ent_preco_p.delete(0, 'end')
-            except: messagebox.showerror("Erro", "Preço inválido")
+        try:
+            nome = self.ent_nome_p.get()
+            preco = float(self.ent_preco_p.get().replace(",", "."))
+            cat = self.ent_cat_p.get()
+            
+            self.service_produto.cadastrar_produto(nome, preco, cat)
+            self.listar_produtos_ui()
+            self.ent_nome_p.delete(0, 'end')
+            self.ent_preco_p.delete(0, 'end')
+        except ValueError:
+            messagebox.showerror("Erro", "Preço ou nome inválido!")
 
     def listar_produtos_ui(self):
         for w in self.scroll_prod.winfo_children(): w.destroy()
-        for p in db.listar_produtos():
+        for p in self.service_produto.listar_todos_puros():
             f = ctk.CTkFrame(self.scroll_prod, fg_color="transparent")
             f.pack(fill="x", pady=2)
             ctk.CTkLabel(f, text=f"{p[1]} | R$ {p[2]:.2f} ({p[3]})").pack(side="left", padx=10)
@@ -179,7 +194,7 @@ class App(ctk.CTk):
 
     def del_produto(self, id_p):
         if messagebox.askyesno("Excluir", "Deseja remover este produto?"):
-            db.deletar_produto(id_p)
+            self.service_produto.excluir_produto(id_p)
             self.listar_produtos_ui()
 
     # ================= TELA DE CLIENTES =================
@@ -187,7 +202,6 @@ class App(ctk.CTk):
         self.limpar_tela()
         ctk.CTkLabel(self.conteudo, text="Gestão de Clientes", font=("Arial", 20, "bold")).pack(pady=10)
 
-        # Cadastro
         f_cad = ctk.CTkFrame(self.conteudo)
         f_cad.pack(pady=10, padx=20, fill="x")
         
@@ -197,20 +211,21 @@ class App(ctk.CTk):
 
         ctk.CTkButton(f_cad, text="Cadastrar", width=100, fg_color="green", command=self.salvar_cliente).pack(side="left", padx=10)
 
-        # Listagem
         self.scroll_cli = ctk.CTkScrollableFrame(self.conteudo, width=700, height=350)
         self.scroll_cli.pack(pady=10, padx=20, fill="both", expand=True)
         self.listar_clientes_ui()
 
     def salvar_cliente(self):
-        if self.c_nome.get() and self.c_tel.get():
-            db.adicionar_cliente(self.c_nome.get(), self.c_tel.get(), self.c_end.get())
+        try:
+            self.service_cliente.cadastrar(self.c_nome.get(), self.c_tel.get(), self.c_end.get())
             self.listar_clientes_ui()
             self.c_nome.delete(0, 'end'); self.c_tel.delete(0, 'end'); self.c_end.delete(0, 'end')
+        except ValueError as e:
+            messagebox.showwarning("Erro", str(e))
 
     def listar_clientes_ui(self):
         for w in self.scroll_cli.winfo_children(): w.destroy()
-        for c in db.listar_clientes():
+        for c in self.service_cliente.listar_para_exibicao():
             f = ctk.CTkFrame(self.scroll_cli, fg_color="transparent")
             f.pack(fill="x", pady=2)
             ctk.CTkLabel(f, text=f"{c[1]} - Tel: {c[2]}").pack(side="left", padx=10)
@@ -218,7 +233,7 @@ class App(ctk.CTk):
 
     def del_cliente(self, id_c):
         if messagebox.askyesno("Excluir", "Deseja remover este cliente?"):
-            db.deletar_cliente(id_c)
+            self.service_cliente.excluir_cliente(id_c)
             self.listar_clientes_ui()
 
 if __name__ == "__main__":
